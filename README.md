@@ -1,4 +1,4 @@
-# camera_app<br>
+# Camera_App USing Flutter<br>
 A Fully Functional Camera App using Flutter, <br>it has following Functionalities: <br>
 1.capture Image <br>
 2.record video <br>
