@@ -1,7 +1,10 @@
-# camera_app
-
-A new Flutter project.
-
+# Camera_App USing Flutter<br>
+A Fully Functional Camera App using Flutter, <br>it has following Functionalities: <br>
+1.capture Image <br>
+2.record video <br>
+3.pick img from gallery<br> 
+4.scan qr code<br>
+<br>
 ## Getting Started
 
 This project is a starting point for a Flutter application.
