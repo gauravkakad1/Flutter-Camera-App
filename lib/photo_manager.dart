@@ -99,7 +99,7 @@ class _PhotoManagerState extends State<PhotoManager> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          pickAssets(maxCount: 5, requestType: RequestType.all);
+          pickAssets(maxCount: 8, requestType: RequestType.all);
         },
         child: Icon(
           Icons.add_a_photo,

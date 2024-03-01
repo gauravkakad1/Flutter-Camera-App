@@ -15,10 +15,16 @@ class MediaServices {
     return albumList;
   }
 
-  Future loadAssets(AssetPathEntity selectedAlbum) async {
-    int end = await selectedAlbum.assetCountAsync;
+  Future<List<AssetEntity>> loadAssets(AssetPathEntity selectedAlbum,
+      {int page = 1, int pageSize = 50}) async {
+    int start = (page - 1) * pageSize;
+    int end = start + pageSize;
+    int totalAssets = await selectedAlbum.assetCountAsync;
+
+    if (totalAssets <= start) return [];
+    if (end > totalAssets) end = totalAssets;
     List<AssetEntity> assetList =
-        await selectedAlbum.getAssetListRange(start: 0, end: end);
+        await selectedAlbum.getAssetListRange(start: start, end: end);
     return assetList;
   }
 }

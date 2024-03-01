@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:camera_app/asset_widget.dart';
 import 'package:camera_app/media_services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -21,10 +22,16 @@ class MediaPicker extends StatefulWidget {
 }
 
 class _MediaPickerState extends State<MediaPicker> {
+  int currentPage = 1;
+  int pageSize = 50;
+  bool isLoading = false;
   AssetPathEntity? selectedAlbum;
   List<AssetPathEntity> albumList = [];
   List<AssetEntity> assetList = [];
   List<AssetEntity> selectedAssetList = [];
+
+  ScrollController _scrollController = ScrollController();
+
   void changeState() {
     if (mounted) {
       setState(() {});
@@ -48,7 +55,16 @@ class _MediaPickerState extends State<MediaPicker> {
         );
       },
     );
+    _scrollController.addListener(_scrollListener);
+
     super.initState();
+  }
+
+  void _scrollListener() {
+    if (_scrollController.position.pixels ==
+        _scrollController.position.maxScrollExtent) {
+      loadMoreThumbnails();
+    }
   }
 
   @override
@@ -70,16 +86,11 @@ class _MediaPickerState extends State<MediaPicker> {
                     },
                   );
                 },
-
                 items: albumList.map<DropdownMenuItem<AssetPathEntity>>(
                     (AssetPathEntity album) {
                   return DropdownMenuItem(
                       value: album, child: Text('${album.name} '));
                 }).toList(),
-                // items: albumList.map<DropdownMenuItem<AssetPathEntity>>
-                // (AssetPathEntity album){
-                //   return DropdownMenuItem<AssetPathEntity>(value: album)
-                // }.toList(),
               ),
             ),
             floatingActionButton: FloatingActionButton(
@@ -89,210 +100,122 @@ class _MediaPickerState extends State<MediaPicker> {
               child: Icon(Icons.check),
             ),
             body: assetList.isEmpty
-                ? const CircularProgressIndicator(
-                    color: Colors.black,
+                ? Center(
+                    child: const CircularProgressIndicator(
+                      color: Colors.black,
+                    ),
                   )
-                : GridView.builder(
-                    itemCount: assetList.length,
-                    physics: const BouncingScrollPhysics(),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3),
-                    itemBuilder: (context, index) {
-                      AssetEntity assetEntity = assetList[index];
-                      return Center(
-                        child: FutureBuilder<Uint8List?>(
-                          future: _loadThumbnail(assetEntity: assetEntity),
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                    ConnectionState.done &&
-                                snapshot.hasData) {
-                              // Display the thumbnail using Image.memory
-                              if (assetEntity.type == AssetType.image) {
-                                return Padding(
-                                  padding:
-                                      selectedAssetList.contains(assetEntity)
-                                          ? const EdgeInsets.all(8.0)
-                                          : const EdgeInsets.all(3.0),
-                                  child: Stack(
-                                    children: [
-                                      Container(
-                                        decoration: BoxDecoration(
-                                            border: Border.all(
-                                                color: Colors.black)),
-                                        height: 200,
-                                        width: 200,
-                                        child: Image.memory(
-                                          snapshot.data!,
-                                          fit: BoxFit.fill,
-                                        ),
-                                      ),
-                                      Positioned(
-                                        top: 10,
-                                        right: 10,
-                                        child: GestureDetector(
-                                          onTap: () =>
-                                              _selectAsset(assetEntity),
-                                          child: Container(
-                                            height: 30,
-                                            width: 30,
-                                            decoration: BoxDecoration(
-                                                shape: BoxShape.circle,
-                                                color:
-                                                    selectedAssetList.contains(
-                                                                assetEntity) ==
-                                                            true
-                                                        ? Colors.red
-                                                        : Colors.transparent,
-                                                border: Border.all(
-                                                    width: 1,
-                                                    color: Colors.black)),
-                                            child: Center(
-                                              child: Text(
-                                                selectedAssetList
-                                                        .contains(assetEntity)
-                                                    ? '${selectedAssetList.indexOf(assetEntity) + 1}'
-                                                    : "",
-                                                style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontWeight:
-                                                        FontWeight.bold),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              } else if (assetEntity.type == AssetType.video) {
-                                return Padding(
-                                  padding:
-                                      selectedAssetList.contains(assetEntity)
-                                          ? const EdgeInsets.all(8.0)
-                                          : const EdgeInsets.all(3.0),
-                                  child: Stack(
-                                    children: [
-                                      Container(
-                                        decoration: BoxDecoration(
-                                            border: Border.all(
-                                                color: Colors.black)),
-                                        height: 200,
-                                        width: 200,
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(3.0),
-                                          child: Image.memory(
-                                            snapshot.data!,
-                                            fit: BoxFit.fill,
-                                          ),
-                                        ),
-                                      ),
-                                      Positioned(
-                                          bottom: 10,
-                                          right: 10,
-                                          child: FaIcon(
-                                            FontAwesomeIcons.video,
-                                            color: Colors.red,
-                                            size: 16,
-                                          )),
-                                      Positioned(
-                                          left: 10,
-                                          top: 10,
-                                          child: FaIcon(
-                                            FontAwesomeIcons.play,
-                                            color: Colors.white,
-                                            size: 16,
-                                          )),
-                                      Positioned(
-                                        top: 10,
-                                        right: 10,
-                                        child: GestureDetector(
-                                          onTap: () =>
-                                              _selectAsset(assetEntity),
-                                          child: Container(
-                                            height: 30,
-                                            width: 30,
-                                            decoration: BoxDecoration(
-                                                shape: BoxShape.circle,
-                                                color:
-                                                    selectedAssetList.contains(
-                                                                assetEntity) ==
-                                                            true
-                                                        ? Colors.red
-                                                        : Colors.transparent,
-                                                border: Border.all(
-                                                    width: 1,
-                                                    color: Colors.black)),
-                                            child: Center(
-                                              child: Text(
-                                                selectedAssetList
-                                                        .contains(assetEntity)
-                                                    ? '${selectedAssetList.indexOf(assetEntity) + 1}'
-                                                    : "",
-                                                style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontWeight:
-                                                        FontWeight.bold),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              } else {
-                                return Container(
-                                  child: Icon(Icons.error),
-                                );
-                              }
-                            } else if (snapshot.hasError) {
-                              return Text(
-                                  'Error loading thumbnail: ${snapshot.error}');
-                            } else {
-                              // Display a loading indicator while the thumbnail is being loaded
+                : Column(
+                    children: [
+                      Expanded(
+                        child: GridView.builder(
+                          itemCount: assetList.length,
+                          physics: const BouncingScrollPhysics(),
+                          controller: _scrollController,
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 3),
+                          itemBuilder: (context, index) {
+                            if (index < assetList.length) {
+                              AssetEntity assetEntity = assetList[index];
                               return Center(
-                                child: CircularProgressIndicator(
-                                  color: Colors.black,
+                                child: FutureBuilder<Uint8List?>(
+                                  future:
+                                      _loadThumbnail(assetEntity: assetEntity),
+                                  builder: (context, snapshot) {
+                                    if (snapshot.connectionState ==
+                                            ConnectionState.done &&
+                                        snapshot.hasData) {
+                                      return AssetWidget(
+                                        assetEntity: assetEntity,
+                                        selectedAssetList: selectedAssetList,
+                                        maxCount: widget.maxCount,
+                                        snapshot: snapshot,
+                                        onAssetSelectionChange:
+                                            (List<AssetEntity> assetList) {
+                                          selectedAssetList = assetList;
+                                          changeState();
+                                        },
+                                      );
+                                    } else if (snapshot.hasError) {
+                                      return Text(
+                                          'Error loading thumbnail: ${snapshot.error}');
+                                    } else {
+                                      // Display a loading indicator while the thumbnail is being loaded
+                                      return Center(
+                                        child: CircularProgressIndicator(
+                                          color: Colors.black,
+                                        ),
+                                      );
+                                    }
+                                  },
                                 ),
                               );
+                            } else {
+                              return Container();
                             }
                           },
                         ),
-                      );
-                    },
+                      ),
+                      isLoading
+                          ? CircularProgressIndicator(
+                              color: Colors.black,
+                            )
+                          : Container()
+                    ],
                   )));
   }
 
   Future<Uint8List?> _loadThumbnail({required AssetEntity assetEntity}) async {
-    // Check the type before attempting to load the thumbnail
     if (assetEntity.type == AssetType.image ||
         assetEntity.type == AssetType.video) {
       return assetEntity.thumbnailData;
     } else {
-      assetList.remove(assetEntity);
-      return null; // Handle other types as needed
+      return null;
     }
   }
 
-  void _selectAsset(AssetEntity assetEntity) {
-    if (widget.maxCount - 1 == selectedAssetList.length) {
-      Navigator.pop(context, selectedAssetList);
-    }
-    if (selectedAssetList.contains(assetEntity)) {
-      _removeAsset(assetEntity);
-    } else if (selectedAssetList.length < widget.maxCount) {
-      _addAsset(assetEntity);
-    }
-  }
-
-  void _addAsset(AssetEntity assetEntity) {
-    selectedAssetList.insert(selectedAssetList.length, assetEntity);
+  void loadMoreThumbnails() async {
+    isLoading = true;
     changeState();
-  }
+    print(
+        '***********************************************\nloading more data \n************************************************************');
 
-  void _removeAsset(AssetEntity assetEntity) {
-    selectedAssetList.remove(assetEntity);
-    changeState();
+    try {
+      currentPage++;
+      List<AssetEntity> moreAssets = await MediaServices().loadAssets(
+        selectedAlbum!,
+        page: currentPage,
+        pageSize: pageSize,
+      );
+      assetList.addAll(moreAssets);
+      isLoading = false;
+      changeState();
+    } catch (e) {
+      print(e);
+    }
+    // finally {
+    //   isLoading = false;
+    //   changeState();
+    // }
   }
+  // void _selectAsset(AssetEntity assetEntity) {
+  //   if (selectedAssetList.contains(assetEntity)) {
+  //     _removeAsset(assetEntity);
+  //   } else if (selectedAssetList.length < widget.maxCount) {
+  //     _addAsset(assetEntity);
+  //   } else if (widget.maxCount == selectedAssetList.length) {
+  //     Navigator.pop(context, selectedAssetList);
+  //   }
+  // }
+
+  // void _addAsset(AssetEntity assetEntity) {
+  //   selectedAssetList.insert(selectedAssetList.length, assetEntity);
+  //   changeState();
+  // }
+
+  // void _removeAsset(AssetEntity assetEntity) {
+  //   selectedAssetList.remove(assetEntity);
+  //   changeState();
+  // }
 }
