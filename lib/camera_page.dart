@@ -1,4 +1,8 @@
 import 'dart:io';
+import 'package:camera_app/photo_manager.dart';
+import 'package:camera_app/scanner_page.dart';
+import 'package:camera_app/short_video_page.dart';
+import 'package:camera_app/video_page.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:path/path.dart' as path;
 import 'package:camera/camera.dart';
@@ -6,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:gallery_saver/gallery_saver.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:camera_app/photo_manager.dart';
 
 class CameraPage extends StatefulWidget {
   final List<CameraDescription>? cameras;
@@ -23,6 +28,8 @@ class _CameraPageState extends State<CameraPage> {
   bool isPhotoMode = true;
   bool frontCamera = true;
   double _zoomValue = 1.0;
+
+  double _baseScale = 1.0;
   bool? isFlashOn = false;
   bool flashClicked = false;
   FlashMode flashMode = FlashMode.auto;
@@ -142,6 +149,17 @@ class _CameraPageState extends State<CameraPage> {
                     child: AspectRatio(
                         aspectRatio: controller.value.aspectRatio,
                         child: GestureDetector(
+                            onScaleStart: (details) {
+                              _baseScale = _zoomValue;
+                            },
+                            onScaleUpdate: (details) {
+                              final double newScale =
+                                  _baseScale * details.scale;
+                              if (newScale.clamp(1.0, 4.0) != newScale) return;
+                              _zoomValue = newScale;
+                              zoomCamera(_zoomValue);
+                              changeState();
+                            },
                             onTapDown: (details) {
                               final Offset tapPosition = details.localPosition;
 
@@ -151,21 +169,21 @@ class _CameraPageState extends State<CameraPage> {
                               setCameraFocusPoint(relativeTapPosition);
                             },
                             child: CameraPreview(controller)))),
-                Positioned(
-                    bottom: 200,
-                    right: 100,
-                    child: Slider(
-                      activeColor: Colors.amber,
-                      inactiveColor: Colors.white,
-                      thumbColor: Colors.white,
-                      value: _zoomValue,
-                      min: 1.0,
-                      max: 4.0,
-                      onChanged: (value) {
-                        zoomCamera(value);
-                        // changeState();
-                      },
-                    )),
+                // Positioned(
+                //     bottom: 200,
+                //     right: 100,
+                //     child: Slider(
+                //       activeColor: Colors.amber,
+                //       inactiveColor: Colors.white,
+                //       thumbColor: Colors.white,
+                //       value: _zoomValue,
+                //       min: 1.0,
+                //       max: 4.0,
+                //       onChanged: (value) {
+                //         zoomCamera(value);
+                //         // changeState();
+                //       },
+                //     )),
                 if (_focusPoint != null)
                   Positioned.fill(
                     top: _focusPoint!.dy * constraints.maxHeight,
@@ -200,12 +218,20 @@ class _CameraPageState extends State<CameraPage> {
                         visible: flashClicked ? false : true,
                         child: GestureDetector(
                           onTap: () {
-                            description = description == 0 ? 1 : 0;
-                            startCamera(description);
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => MobileScannerPage(
+                                      cameras: widget.cameras),
+                                ));
                           },
-                          child: FaIcon(
-                            FontAwesomeIcons.qrcode,
-                            color: Colors.white,
+                          child: SizedBox(
+                            height: 50,
+                            width: 50,
+                            child: Icon(
+                              Icons.qr_code_scanner,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ),
@@ -227,8 +253,7 @@ class _CameraPageState extends State<CameraPage> {
                           child: Text(
                             'Photo',
                             style: TextStyle(
-                                color:
-                                    isPhotoMode ? Colors.amber : Colors.white,
+                                color: Colors.amber,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 18),
                           ),
@@ -237,12 +262,54 @@ class _CameraPageState extends State<CameraPage> {
                           onTap: () {
                             isPhotoMode = false;
                             changeState();
+                            if (controller.value.isInitialized) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      VideoPage(cameras: widget.cameras),
+                                ),
+                              ).then(
+                                (value) {
+                                  // Navigator.pop(context);
+                                  Navigator.popUntil(context, (route) => false);
+                                  controller.dispose();
+                                },
+                              );
+                            }
                           },
                           child: Text(
                             'Video',
                             style: TextStyle(
-                                color:
-                                    isPhotoMode ? Colors.white : Colors.amber,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18),
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            isPhotoMode = false;
+                            changeState();
+                            if (controller.value.isInitialized) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      ShortVideoPage(cameras: widget.cameras),
+                                ),
+                              ).then(
+                                (value) {
+                                  // Navigator.pop(context);
+                                  Navigator.popUntil(context, (route) => false);
+                                  controller.dispose();
+                                },
+                              );
+                            }
+                          },
+                          child: Text(
+                            'Short Video',
+                            style: TextStyle(
+                                color: Colors.white,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 18),
                           ),
@@ -258,7 +325,10 @@ class _CameraPageState extends State<CameraPage> {
                       children: [
                         GestureDetector(
                           onTap: () {
-                            pickImage();
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => PhotoManager()));
                           },
                           child: Container(
                             height: 50,

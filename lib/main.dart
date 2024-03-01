@@ -1,4 +1,4 @@
-import 'package:camera_app/camerapgae.dart';
+import 'package:camera_app/camera_page.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 
