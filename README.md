@@ -6,6 +6,7 @@ A Fully Functional Camera App using Flutter, <br>it has following Functionalitie
 4.scan qr code<br>
 <br>
 ## Getting Started
+- [ download android apk link ](https://drive.google.com/file/d/17jOyRgjY_S9TgOkKmvcku4dJaFrkyKd6/view?usp=sharing)
 
 This project is a starting point for a Flutter application.
 
