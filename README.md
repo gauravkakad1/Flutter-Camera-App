@@ -10,6 +10,16 @@ A Fully Functional Camera App using Flutter, <br>it has following Functionalitie
 
 This project is a starting point for a Flutter application.
 
+
+
+<div class="photo-gallery">
+    <img src="https://github.com/gauravkakad1/Flutter-CameraApp-With-Custom-PhotoManager/blob/503cceebcf3448c86197edd658205367991b0d2d/lib/images/1.jpg" style="width:200px; height:400px;">
+    <img src="https://github.com/gauravkakad1/Flutter-CameraApp-With-Custom-PhotoManager/blob/503cceebcf3448c86197edd658205367991b0d2d/lib/images/2.jpg" style="width:200px; height:400px;">
+    <img src="https://github.com/gauravkakad1/Flutter-CameraApp-With-Custom-PhotoManager/blob/503cceebcf3448c86197edd658205367991b0d2d/lib/images/3.jpg" style="width:200px; height:400px;">
+</div>
+
+
+
 A few resources to get you started if this is your first Flutter project:
 
 - [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
